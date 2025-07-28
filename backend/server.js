@@ -1,21 +1,28 @@
 const express = require('express');
-const mongoose = require('mongoose'); // ✅ MUST be declared before usage
+const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
 
-dotenv.config(); // Load env variables
+dotenv.config(); // Load .env variables
 
 const app = express();
-app.use(express.json()); // Parse JSON body
-app.use(cors()); // Enable frontend/backend communication
 
+// Middlewares
+app.use(express.json()); // Parse JSON request bodies
+app.use(cors()); // Enable cross-origin requests from frontend
+
+// Routes
 const userRoutes = require('./routes/userRoutes');
-app.use('/api/users', userRoutes); // 👤 Auth endpoints
+const projectRoutes = require('./routes/projectRoutes');
 
+app.use('/api/users', userRoutes);       // /register and /login
+app.use('/api/projects', projectRoutes); // CRUD routes for projects
+
+// Env variables
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
-// ✅ Connect to MongoDB
+// Connect to MongoDB and start server
 mongoose
   .connect(MONGO_URI)
   .then(() => {
