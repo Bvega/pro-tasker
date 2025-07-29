@@ -3,22 +3,24 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
 
-dotenv.config(); // Load .env variables
+dotenv.config(); // Load environment variables
 
 const app = express();
 
-// Middlewares
-app.use(express.json()); // Parse JSON request bodies
-app.use(cors()); // Enable cross-origin requests from frontend
+// Middleware
+app.use(express.json()); // Parse incoming JSON requests
+app.use(cors()); // Enable CORS for frontend/backend communication
 
 // Routes
 const userRoutes = require('./routes/userRoutes');
 const projectRoutes = require('./routes/projectRoutes');
+const taskRoutes = require('./routes/taskRoutes');
 
-app.use('/api/users', userRoutes);       // /register and /login
-app.use('/api/projects', projectRoutes); // CRUD routes for projects
+app.use('/api/users', userRoutes);                         // User registration & login
+app.use('/api/projects', projectRoutes);                   // Project CRUD
+app.use('/api/projects/:projectId/tasks', taskRoutes);     // Nested Task CRUD
 
-// Env variables
+// Env Variables
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
