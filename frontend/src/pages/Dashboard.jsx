@@ -3,24 +3,40 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AddProjectForm from "../components/AddProjectForm";
+import axios from "axios";
 
-// 🧠 Dashboard page that loads after successful login
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null); // 🧠 Holds the logged-in user's info
-  const [projects, setProjects] = useState([]); // 🧠 Holds the fetched projects
+  const [user, setUser] = useState(null);               // Authenticated user info
+  const [projects, setProjects] = useState([]);         // List of user-created projects
 
-  // 🧠 On mount: load user from localStorage or redirect to login
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    } else {
+
+    if (!storedUser) {
       navigate("/login");
+    } else {
+      setUser(JSON.parse(storedUser));
+      fetchProjects();  // Fetch projects after login
     }
   }, [navigate]);
 
-  // 🧠 Handle logout by clearing storage and navigating to login
+  const fetchProjects = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await axios.get("http://localhost:5000/api/projects", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setProjects(response.data); // Populate projects state
+    } catch (err) {
+      console.error("Failed to fetch projects:", err);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -29,14 +45,33 @@ const Dashboard = () => {
 
   return (
     <div className="flex h-screen">
-      {/* 🧱 Sidebar */}
-      <div className="w-1/4 bg-white border-r p-6 space-y-4">
+      {/* Sidebar */}
+      <div className="w-1/4 bg-white border-r p-6 space-y-6">
         <h2 className="text-xl font-bold text-yellow-600">📁 Projects</h2>
-        {/* 🧱 AddProjectForm is the form component for creating new projects */}
+
+        {/* Project creation form */}
         <AddProjectForm setProjects={setProjects} />
+
+        {/* Render project list */}
+        <div className="mt-6">
+          {projects.length === 0 ? (
+            <p className="text-gray-500">No projects yet</p>
+          ) : (
+            <ul className="space-y-2">
+              {projects.map((project) => (
+                <li
+                  key={project._id}
+                  className="p-2 border rounded shadow-sm bg-gray-50 hover:bg-gray-100"
+                >
+                  {project.name}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
 
-      {/* 📋 Main Content */}
+      {/* Main content */}
       <div className="flex-1 p-6 bg-gray-100">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">
