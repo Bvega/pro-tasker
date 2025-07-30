@@ -1,94 +1,56 @@
 // src/pages/Dashboard.jsx
+import React, { useEffect, useState } from 'react'
+import AddProjectForm from './AddProjectForm'
+import { getProjects } from '../utils/api'
 
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import AddProjectForm from "../components/AddProjectForm";
-import axios from "axios";
+export default function Dashboard() {
+  const [projects, setProjects] = useState([])
+  const [error, setError] = useState('')
 
-const Dashboard = () => {
-  const navigate = useNavigate();
-  const [user, setUser] = useState(null);               // Authenticated user info
-  const [projects, setProjects] = useState([]);         // List of user-created projects
-
+  // Fetch projects on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    (async () => {
+      try {
+        const data = await getProjects()
+        setProjects(data)
+      } catch (err) {
+        console.error('[Dashboard] Error fetching projects:', err)
+        setError(err.response?.data?.message || 'Error fetching projects')
+      }
+    })()
+  }, [])
 
-    if (!storedUser) {
-      navigate("/login");
-    } else {
-      setUser(JSON.parse(storedUser));
-      fetchProjects();  // Fetch projects after login
-    }
-  }, [navigate]);
-
-  const fetchProjects = async () => {
-    try {
-      const token = localStorage.getItem("token");
-
-      const response = await axios.get("http://localhost:5000/api/projects", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      setProjects(response.data); // Populate projects state
-    } catch (err) {
-      console.error("Failed to fetch projects:", err);
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/login");
-  };
+  // Handler when a new project is created
+  const handleCreate = (newProject) => {
+    setProjects(prev => [...prev, newProject])
+  }
 
   return (
-    <div className="flex h-screen">
-      {/* Sidebar */}
-      <div className="w-1/4 bg-white border-r p-6 space-y-6">
-        <h2 className="text-xl font-bold text-yellow-600">📁 Projects</h2>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Welcome to your Dashboard</h1>
 
-        {/* Project creation form */}
-        <AddProjectForm setProjects={setProjects} />
+      {/* Add new project */}
+      <AddProjectForm onCreate={handleCreate} />
 
-        {/* Render project list */}
-        <div className="mt-6">
-          {projects.length === 0 ? (
-            <p className="text-gray-500">No projects yet</p>
-          ) : (
-            <ul className="space-y-2">
-              {projects.map((project) => (
-                <li
-                  key={project._id}
-                  className="p-2 border rounded shadow-sm bg-gray-50 hover:bg-gray-100"
-                >
-                  {project.name}
+      {/* Error message */}
+      {error && <p className="text-red-600 mb-4">Error: {error}</p>}
+
+      {/* List of projects */}
+      <div>
+        <h2 className="text-xl font-semibold mb-2">Your Projects</h2>
+        {projects.length === 0
+          ? <p className="text-gray-600">No projects found.</p>
+          : (
+            <ul>
+              {projects.map(proj => (
+                <li key={proj._id} className="mb-1">
+                  {proj.name}
                 </li>
               ))}
             </ul>
-          )}
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div className="flex-1 p-6 bg-gray-100">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold">
-            Welcome, {user?.name || "User"}
-          </h1>
-          <button
-            onClick={handleLogout}
-            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-          >
-            Logout
-          </button>
-        </div>
-
-        <p className="text-gray-600">Select or create a project to begin.</p>
+          )
+        }
       </div>
     </div>
-  );
-};
-
-export default Dashboard;
+  )
+}

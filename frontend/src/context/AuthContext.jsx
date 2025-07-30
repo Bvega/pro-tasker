@@ -1,41 +1,58 @@
-import { createContext, useState } from 'react';
+import React, { createContext, useState, useEffect } from 'react'
 
-// Create the context to be shared globally
-const AuthContext = createContext();
+// Create context
+export const AuthContext = createContext(null)
 
-// AuthProvider wraps your entire app and shares auth state
-export const AuthProvider = ({ children }) => {
-  // Retrieve user info from localStorage if available
-  const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem('user');
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
+// Provider component
+export function AuthProvider({ children }) {
+  // Safely parse a JSON value or return default
+  const safeParse = (key, fallback = null) => {
+    try {
+      const raw = localStorage.getItem(key)
+      return raw ? JSON.parse(raw) : fallback
+    } catch (err) {
+      console.error(`Failed to parse localStorage.${key}:`, err)
+      return fallback
+    }
+  }
 
-  // Retrieve token from localStorage if available
-  const [token, setToken] = useState(() => localStorage.getItem('token') || '');
+  // Initialize state from localStorage (or null)
+  const [user, setUser]     = useState(() => safeParse('user'))
+  const [token, setToken]   = useState(() => safeParse('token'))
 
-  // Save user info and token to state and localStorage
+  // Save to localStorage whenever they change
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user))
+    } else {
+      localStorage.removeItem('user')
+    }
+  }, [user])
+
+  useEffect(() => {
+    if (token) {
+      localStorage.setItem('token', JSON.stringify(token))
+    } else {
+      localStorage.removeItem('token')
+    }
+  }, [token])
+
+  // Login helper: set both user + token
   const login = (userData, jwt) => {
-    setUser(userData);
-    setToken(jwt);
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('token', jwt);
-  };
+    setUser(userData)
+    setToken(jwt)
+  }
 
-  // Clear auth state and localStorage on logout
+  // Logout helper: clear state + storage
   const logout = () => {
-    setUser(null);
-    setToken('');
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-  };
+    setUser(null)
+    setToken(null)
+  }
 
-  // Provide auth values to the rest of the app
+  // Expose context value
   return (
     <AuthContext.Provider value={{ user, token, login, logout }}>
       {children}
     </AuthContext.Provider>
-  );
-};
-
-export default AuthContext;
+  )
+}
