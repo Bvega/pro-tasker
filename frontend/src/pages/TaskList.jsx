@@ -1,33 +1,20 @@
 // src/pages/TaskList.jsx
-import React from "react";
+import React from 'react'
 
-const TaskList = ({ tasks }) => {
-  if (!tasks || tasks.length === 0) {
-    return <p className="text-gray-500">No tasks available for this project.</p>;
+export default function TaskList({ tasks }) {
+  if (!tasks.length) {
+    return <p className="text-gray-600">No tasks for this project.</p>
   }
 
   return (
-    <div>
-      <h3 className="text-lg font-semibold mb-2">Tasks</h3>
-      <ul className="space-y-2">
-        {tasks.map((task) => (
-          <li
-            key={task._id}
-            className="p-3 bg-white rounded shadow flex justify-between items-center"
-          >
-            <span>{task.title}</span>
-            <span
-              className={`text-sm font-medium ${
-                task.completed ? "text-green-600" : "text-yellow-600"
-              }`}
-            >
-              {task.completed ? "Completed" : "Pending"}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-};
-
-export default TaskList;
+    <ul className="space-y-4">
+      {tasks.map(task => (
+        <li key={task._id} className="border p-4 rounded shadow-sm">
+          <h4 className="font-semibold">{task.title}</h4>
+          {task.description && <p className="text-gray-700">{task.description}</p>}
+          <span className="text-sm text-blue-600">{task.status || 'To Do'}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
