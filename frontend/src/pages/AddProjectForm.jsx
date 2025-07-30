@@ -1,36 +1,39 @@
-import React, { useState } from 'react'
-import { createProject } from '../utils/api'    // correct named import
+// src/pages/AddProjectForm.jsx
 
-export default function AddProjectForm({ onProjectCreated, onError }) {
-  const [name, setName] = useState('')
+import { useState } from 'react';
+import { createProject } from '../utils/api';       // named import
+import useAuth from '../hooks/useAuth';
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+export default function AddProjectForm({ onCreated }) {
+  const { token } = useAuth();
+  const [name, setName] = useState('');
+  const [message, setMessage] = useState('');
+
+  const handleSubmit = async e => {
+    e.preventDefault();
     try {
-      await createProject(name)                 // calls your API util
-      onProjectCreated()                        // notify parent to refresh list
-      setName('')                               // clear input
+      const res = await createProject(token, { name });
+      onCreated(res.data);
+      setMessage('Project created!');
+      setName('');
     } catch (err) {
-      onError(err.response?.data?.message || err.message)
+      setMessage(err.response?.data?.message || 'Failed to create project');
     }
-  }
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-center space-x-2 mb-4">
+    <form onSubmit={handleSubmit} className="flex gap-2">
       <input
-        type="text"
         value={name}
-        onChange={(e) => setName(e.target.value)}
+        onChange={e => setName(e.target.value)}
         placeholder="New project name"
-        className="border border-gray-300 px-3 py-2 rounded flex-1"
+        className="flex-1 border px-3 py-2 rounded"
         required
       />
-      <button
-        type="submit"
-        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-      >
+      <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
         + Add Project
       </button>
+      {message && <span className="ml-4 text-green-600">{message}</span>}
     </form>
-  )
+  );
 }

@@ -1,32 +1,48 @@
 // src/utils/api.js
-import axios from 'axios'
 
-// create a pre-configured axios instance
-const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
-  withCredentials: true,   // if you ever need cookies
-})
+import axios from 'axios';
 
-// automatically inject token from localStorage
-api.interceptors.request.use((cfg) => {
-  const raw = localStorage.getItem('token')
-  if (raw) {
-    const token = JSON.parse(raw)
-    cfg.headers.Authorization = `Bearer ${token}`
-  }
-  return cfg
-})
+// Create an axios instance with your baseURL
+const apiClient = axios.create({
+  baseURL: 'http://localhost:5000/api',  // adjust if you use an env var instead
+  // withCredentials: true, // uncomment only if you rely on cookie auth
+});
 
-// named exports for your CRUD helpers
-export async function getProjects() {
-  const { data } = await api.get('/projects')
-  return data
-}
+// ===== User endpoints =====
 
-export async function createProject(name) {
-  const { data } = await api.post('/projects', { name })
-  return data
-}
+// Log in a user
+export const loginUser = formData =>
+  apiClient.post('/users/login', formData);
 
-// --- the new line: default export of the axios instance
-export default api
+// Register a new user
+export const registerUser = formData =>
+  apiClient.post('/users/register', formData);
+
+// ===== Project endpoints =====
+
+// Fetch all projects for the current user
+export const getProjects = token =>
+  apiClient.get('/projects', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+// Create a new project
+export const createProject = (token, projectData) =>
+  apiClient.post('/projects', projectData, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+// ===== Task endpoints (if/when you need them) =====
+
+// export const getTasks = (...) => ...
+// export const createTask = (...) => ...
+
+// Default export in case you prefer `import api from './api'`
+export default {
+  loginUser,
+  registerUser,
+  getProjects,
+  createProject,
+  // getTasks,
+  // createTask,
+};

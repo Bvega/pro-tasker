@@ -1,54 +1,52 @@
-import React, { useEffect, useState } from 'react'
-import AddProjectForm from './AddProjectForm'    // relative import correctly pointed at same folder
-import { getProjects } from '../utils/api'       // correct named import
+// src/pages/Dashboard.jsx
+
+import React, { useEffect, useState } from 'react';
+import AddProjectForm from './AddProjectForm';
+import { getProjects } from '../utils/api';     // named import
+import useAuth from '../hooks/useAuth';
 
 export default function Dashboard() {
-  const [projects, setProjects] = useState([])
-  const [message, setMessage]     = useState('')
-
-  const fetchProjects = async () => {
-    try {
-      const data = await getProjects()           // fetch from API util
-      setProjects(data)
-    } catch (err) {
-      setMessage(err.response?.data?.message || err.message)
-    }
-  }
+  const { user, token, logout } = useAuth();
+  const [projects, setProjects] = useState([]);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchProjects()
-  }, [])
+    async function fetchProjects() {
+      try {
+        const res = await getProjects(token);
+        setProjects(res.data);
+      } catch (err) {
+        setError(err.response?.data?.message || 'Error fetching projects');
+      }
+    }
+    fetchProjects();
+  }, [token]);
 
   return (
-    <div className="min-h-screen p-8 bg-gray-100">
-      <h1 className="text-2xl font-bold mb-4">Welcome to your Dashboard</h1>
+    <div className="p-8 max-w-2xl mx-auto">
+      <header className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Welcome, {user.name}</h1>
+        <button onClick={logout} className="bg-red-500 text-white px-4 py-2 rounded">
+          Logout
+        </button>
+      </header>
 
-      <AddProjectForm
-        onProjectCreated={() => {
-          setMessage('Project created!')
-          fetchProjects()
-        }}
-        onError={(errMsg) => setMessage(errMsg)}
-      />
+      <AddProjectForm onCreated={proj => setProjects(prev => [...prev, proj])} />
 
-      {message && (
-        <p className="mb-4 text-green-600">{message}</p>
-      )}
+      {error && <p className="text-red-500 mt-4">{error}</p>}
 
-      <section>
+      <section className="mt-6">
         <h2 className="text-xl font-semibold mb-2">Your Projects</h2>
-        {projects.length === 0 ? (
-          <p className="text-gray-600">No projects found.</p>
-        ) : (
-          <ul className="list-disc pl-5">
-            {projects.map((proj) => (
-              <li key={proj._id} className="mb-1">
-                {proj.name}
-              </li>
-            ))}
-          </ul>
-        )}
+        {projects.length
+          ? (
+            <ul className="list-disc list-inside">
+              {projects.map(p => <li key={p._id}>{p.name}</li>)}
+            </ul>
+          ) : (
+            <p>No projects yet.</p>
+          )
+        }
       </section>
     </div>
-  )
+  );
 }

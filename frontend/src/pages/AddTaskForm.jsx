@@ -1,50 +1,38 @@
 // src/pages/AddTaskForm.jsx
-import React, { useState } from 'react'
-import { createTask } from '../utils/api'
+import React, { useState } from 'react';
 
-export default function AddTaskForm({ projectId, onTaskCreated }) {
-  const [title, setTitle] = useState('')           // Task title input
-  const [description, setDescription] = useState('') // Task description input
-  const [message, setMessage] = useState('')       // Feedback message
+export default function AddTaskForm({ onAdd }) {
+  const [title, setTitle] = useState('');
+  const [error, setError] = useState('');
 
-  // Handle form submission to create a new task
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setMessage('Adding task...')
+  const handleSubmit = async e => {
+    e.preventDefault();
+    if (!title.trim()) return setError('Title can’t be blank');
+
     try {
-      const newTask = await createTask(projectId, { title, description })
-      setTitle('')        // Reset form fields
-      setDescription('')
-      setMessage('Task added!')
-      onTaskCreated(newTask) // Notify parent to update task list
-    } catch (err) {
-      setMessage(err.response?.data?.message || 'Error adding task')
+      await onAdd(title);
+      setTitle('');
+      setError('');
+    } catch {
+      setError('Failed to create task');
     }
-  }
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="mb-6 space-y-2">
-      <input
-        type="text"
-        value={title}
-        onChange={e => setTitle(e.target.value)}
-        placeholder="Task title"
-        required
-        className="w-full border px-3 py-2 rounded"
-      />
-      <textarea
-        value={description}
-        onChange={e => setDescription(e.target.value)}
-        placeholder="Task description"
-        className="w-full border px-3 py-2 rounded"
-      />
-      <button
-        type="submit"
-        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-      >
-        + Add Task
-      </button>
-      {message && <p className="text-sm text-gray-600">{message}</p>}
+    <form onSubmit={handleSubmit} className="mt-4">
+      <div className="flex items-center space-x-2">
+        <input
+          type="text"
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          placeholder="New task title"
+          className="border px-2 py-1 rounded flex-grow"
+        />
+        <button type="submit" className="bg-green-500 text-white px-4 py-1 rounded">
+          + Add Task
+        </button>
+      </div>
+      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
     </form>
-  )
+  );
 }
